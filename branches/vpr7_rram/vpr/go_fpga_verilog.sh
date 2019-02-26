@@ -19,8 +19,8 @@ set arch_xml_file = ARCH/ed_stdcell.xml
 #set blif_file = Circuits/simple_gates_prevpr.blif 
 #set act_file = Circuits/simple_gates_prevpr.act 
 set verilog_reference = ${PWD}/Circuits/s298_prevpr.v
-set blif_file = Circuits/s298_prevpr.blif 
-set act_file = Circuits/s298_prevpr.act 
+set blif_file = Circuits/ex5p.blif 
+set act_file = Circuits/ex5p.act 
 set vpr_route_chan_width = 200
 
 # Step A: Make sure a clean start 
