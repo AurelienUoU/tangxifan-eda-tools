@@ -203,6 +203,7 @@ void dump_verilog_timeout_and_vcd(FILE * fp,
 	fprintf(fp, "    $display(\"Simulation start\");\n");
 	fprintf(fp, "    #%i // Can be changed by the user for his need\n", simulation_time);
 	fprintf(fp, "    $display(\"Simulation End: Time's up\");\n");
+	fprintf(fp, "    $finish;\n");
 	fprintf(fp, "  end\n");
 	fprintf(fp, "`endif\n\n");
 	return;
