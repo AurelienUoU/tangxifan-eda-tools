@@ -39,6 +39,7 @@
 #include "verilog_routing.h"
 #include "verilog_tcl_utils.h"
 #include "verilog_sdc_pb_types.h"
+#include "verilog_sdc.h"
 
 /* options for report timing */
 typedef struct s_sdc_opts t_sdc_opts;
@@ -61,8 +62,15 @@ float get_routing_seg_sdc_tmax (t_segment_inf* cur_seg) {
 }
 
 boolean is_rr_node_to_be_disable_for_analysis(t_rr_node* cur_rr_node) {
+  /* Conditions to enable timing analysis for a node 
+   * 1st condition: it have a valid vpack_net_number 
+   * 2nd condition: it is not an parasitic net 
+   * 3rd condition: it is not a global net
+   */
   if ( (OPEN != cur_rr_node->vpack_net_num) 
-    && (FALSE == cur_rr_node->is_parasitic_net)) {
+    && (FALSE == cur_rr_node->is_parasitic_net)
+    && (FALSE == vpack_net[cur_rr_node->vpack_net_num].is_global)
+    && (FALSE == vpack_net[cur_rr_node->vpack_net_num].is_const_gen) ){
     return FALSE;
   }
   return TRUE;
@@ -897,6 +905,43 @@ void verilog_generate_sdc_disable_sram_orgz(FILE* fp,
   return;
 }
 
+void verilog_generate_sdc_disable_unused_sbs_muxs(FILE* fp, int LL_nx, int LL_ny) {
+
+int ix, iy, side, itrack, imux;
+t_rr_node* cur_rr_node;
+t_sb* cur_sb_info;
+  for (ix = 0; ix < (LL_nx + 1); ix++) {
+    for (iy = 0; iy < (LL_ny + 1); iy++) {
+      cur_sb_info = &(sb_info[ix][iy]);
+      /* Print comments */
+      fprintf(fp,
+              "########################################################\n"); 
+      fprintf(fp, 
+              "### Disable Timing for MUXES in Switch block[%d][%d] ###\n",
+              ix, iy);
+      fprintf(fp,
+              "########################################################\n"); 
+      
+      for (side = 0; side < cur_sb_info->num_sides; side++) {
+        for (itrack = 0; itrack < cur_sb_info->chan_width[side]; itrack++) {
+          if (OUT_PORT == cur_sb_info->chan_rr_node_direction[side][itrack]) {
+            cur_rr_node = cur_sb_info->chan_rr_node[side][itrack];
+            for (imux = 0 ; imux < cur_rr_node-> fan_in; imux++) {
+              if (imux == cur_rr_node->id_path) {
+                fprintf(fp, "#"); // comments out if the node is active
+              }
+              assert(cur_rr_node->name_mux != NULL);
+              fprintf(fp, "set_disable_timing [get_pins -hierarchical %s[%d]]\n", 
+                      cur_rr_node->name_mux, imux);
+            }
+          }
+        }
+      } 
+    }
+  }
+return;
+}
+
 void verilog_generate_sdc_disable_unused_sbs(FILE* fp,
                                              int LL_nx, int LL_ny, 
                                              int num_switch,
@@ -1398,8 +1443,12 @@ void verilog_generate_sdc_input_output_delays(FILE* fp,
           found_mapped_inpad = 1;
           break;
         }
-        /* Input PAD only need a short connection */
+        /* Input PAD may drive a clock net or a constant generator */
         assert(VPACK_INPAD == logical_block[iblock].type);
+        /* clock net or constant generator should be disabled in timing analysis */
+        if (TRUE == logical_block[iblock].is_clock) {
+          break;
+        }
         fprintf(fp, "set_input_delay ");
         fprintf(fp, " 0 ");
         dump_verilog_generic_port(fp, VERILOG_PORT_CONKT, 
@@ -1411,7 +1460,7 @@ void verilog_generate_sdc_input_output_delays(FILE* fp,
                 clock_port[iport]->prefix);
         }
         fprintf(fp, "\n");
-        found_mapped_inpad++;
+        found_mapped_inpad = 1;
       }
     } 
     assert((0 == found_mapped_inpad)||(1 == found_mapped_inpad));
@@ -1558,6 +1607,8 @@ void verilog_generate_sdc_analysis(t_sram_orgz_info* cur_sram_orgz_info,
   verilog_generate_sdc_disable_unused_sbs(fp, LL_nx, LL_ny,
                                           routing_arch->num_switch, switch_inf,
                                           arch.spice); 
+
+  verilog_generate_sdc_disable_unused_sbs_muxs(fp, LL_nx, LL_ny);
 
   /* Apply to Grids */
   verilog_generate_sdc_disable_unused_grids(fp, LL_nx, LL_ny, LL_grid, LL_block);
