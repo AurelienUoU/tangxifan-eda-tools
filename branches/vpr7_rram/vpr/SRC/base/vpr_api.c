@@ -865,7 +865,7 @@ void free_circuit() {
       free(block[i].name);
     }
   }
-  free(block);
+  //free(block);
   block = NULL;
 
   free(blif_circuit_name);

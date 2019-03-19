@@ -140,5 +140,9 @@ extern float pack_route_time;
 extern int num_clb2clb_directs;
 extern t_clb_to_clb_directs* clb2clb_direct;
 
+/* Aurelien ALACCHI: copy nb clusters for formality script internal register mapping */
+extern int copy_nb_clusters;
+extern t_block *copy_clb;
+
 #endif
 

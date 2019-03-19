@@ -1372,7 +1372,7 @@ sub run_vpr_route($ $ $ $ $ $ $ $ $)
     }
   }
   if ("on" eq $opt_ptr->{vpr_fpga_verilog}) {
-    $vpr_spice_opts = $vpr_spice_opts." --fpga_syn_verilog";
+    $vpr_spice_opts = $vpr_spice_opts." --fpga_verilog";
     if ("on" eq $opt_ptr->{vpr_fpga_x2p_rename_illegal_port}) {
       $vpr_spice_opts = $vpr_spice_opts." --fpga_x2p_rename_illegal_port";
     }

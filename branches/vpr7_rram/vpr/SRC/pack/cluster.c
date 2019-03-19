@@ -576,6 +576,8 @@ void do_clustering(const t_arch *arch, t_pack_molecule *molecule_head,
 
 	output_clustering(clb, num_clb, global_clocks, is_clock, out_fname, FALSE);
 
+	copy_nb_clusters = num_clb;
+
 	if (getEchoEnabled() && isEchoFileEnabled(E_ECHO_POST_PACK_NETLIST)) {
 		output_blif (clb, num_clb, global_clocks, is_clock,
 			getEchoFileName(E_ECHO_POST_PACK_NETLIST), FALSE);
@@ -586,14 +588,16 @@ void do_clustering(const t_arch *arch, t_pack_molecule *molecule_head,
 	}
 	free_cluster_placement_stats(cluster_placement_stats);
 
-	for (i = 0; i < num_clb; i++) {
+	copy_clb = clb;
+
+/*	for (i = 0; i < num_clb; i++) {
 		free_cb(clb[i].pb);
 		free(clb[i].name);
 		free(clb[i].nets);
 		free(clb[i].pb);
 	}
 	free(clb);
-
+*/
 	free(num_used_instances_type);
 	free(num_instances_type);
 	free(unclustered_list_head);
